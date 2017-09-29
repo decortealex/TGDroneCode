@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+import numpy as numpy
 import cv2
 from commands import *
 import logging
@@ -11,11 +12,23 @@ logging.basicConfig(level=logging.DEBUG)
 
 wnd = None
 cnt = 0
-blueLower = np.array([100, 67, 0], dtype="uint8")
-blueUpper = np.array([255, 128, 50], dtype="uint8")
+f = open( "./images/video.h264", "wb" )
 # frame =
-
+# we need this to actually use this for the rectangle stuff
+# if we're using that for movement.
 def video_frame(frame):
+    if drone.frameWidth == 0:
+        drone.frameWidth = numpy.size(frame, 1)
+    if drone.frameHeight == 0:
+        drone.frameHeight = numpy.size(frame, 0)
+
+    # Initialize variables to compare the current frame to
+    if drone.thisFrame is None:
+        drone.lastFrame = frame
+    else:
+        drone.lastFrame = drone.thisFrame
+    drone.thisFrame = frame
+
     blueLower = np.array([100, 67, 0], dtype="uint8")
     blueUpper = np.array([255, 128, 50], dtype="uint8")
 
@@ -101,7 +114,6 @@ while not done:
                 done = True  # Flag that we are done so we exit this loop
         # if cv2.inRange(frame, blueLower, blueUpper):
         #     drone.land()
-
         # drone.takeoff()
         # drone.flyToAltitude(2.5)
         #     drone.update()
