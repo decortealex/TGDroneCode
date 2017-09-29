@@ -1,5 +1,7 @@
 import pygame
+# so we can use np to reference numpy
 import numpy as np
+# so we can easily add in whatever we need from the other codes, seeing as winston uses this.
 import numpy as numpy
 import cv2
 from commands import *
