@@ -7,12 +7,12 @@ logging.basicConfig(level=logging.DEBUG)
 
 wnd = None
 def video_frame(frame):
-   blueLower = np.array([100, 67, 0], dtype="uint8")
-   blueUpper = np.array([255, 128, 50], dtype="uint8")
+   plateLower = np.array([160, 170, 190], dtype="uint8")
+   plateUpper = np.array([225, 230, 250], dtype="uint8")
 
    # determine which pixels fall within the blue boundaries
    # and then blur the binary image
-   blue = cv2.inRange(frame, blueLower, blueUpper)
+   blue = cv2.inRange(frame, plateLower, plateUpper)
    blue = cv2.GaussianBlur(blue, (3, 3), 0)
 
    # find contours in the image

@@ -194,7 +194,7 @@ def video_frame(frame):
         drone.objectCenterY = drone.frameHeight >> 1
         drone.sinceLastSphero = 0
 
-    cnt += 1
+    # cnt += 1
     cv2.imshow("Drone", frame)
     # cv2.imshow("Motion Detection", frameDelta)
     cv2.imshow("Threshold Edges", edges)
@@ -278,7 +278,6 @@ panMin = -40
 panMax = 40
 
 secondsCounter = 0
-frames = 0
 
 printCounter = 0
 spheroMoveCounter = 0

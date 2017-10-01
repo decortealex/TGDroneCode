@@ -7,14 +7,40 @@ import cv2
 from commands import *
 import logging
 from bebop import Bebop
-from bardecoder import Decoder
-from bardecoder import Barcode
-
+# from bardecoder import Decoder
+# from bardecoder import Barcode
+#
 logging.basicConfig(level=logging.DEBUG)
 
 wnd = None
 cnt = 0
 f = open( "./images/video.h264", "wb" )
+frames = 0
+lastFrames = 0
+
+pygame.init()
+size = [100, 100]
+screen = pygame.display.set_mode(size)
+pygame.display.set_caption("Drone Teleop")
+
+# Loop until the user clicks the close button.
+done = False
+
+# Used to manage how fast the screen updates
+clock = pygame.time.Clock()
+
+# Initializes joystick
+if pygame.joystick.get_count() == 0:
+    print("No joysticks found")
+    done = True
+else:
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+    print("Initialized %s" % (joystick.get_name()))
+    print("Number of buttons %d. Number of axis %d, Number of hats %d" %
+          (joystick.get_numbuttons(), joystick.get_numaxes(),
+           joystick.get_numhats()))
+
 # frame =
 # we need this to actually use this for the rectangle stuff
 # if we're using that for movement.
@@ -31,13 +57,13 @@ def video_frame(frame):
         drone.lastFrame = drone.thisFrame
     drone.thisFrame = frame
 
-    blueLower = np.array([100, 67, 0], dtype="uint8")
-    blueUpper = np.array([255, 128, 50], dtype="uint8")
+    plateLower = np.array([160, 170, 190], dtype="uint8")
+    plateUpper = np.array([225, 230, 250], dtype="uint8")
 
     # determine which pixels fall within the blue boundaries
     # and then blur the binary image
 
-    blue = cv2.inRange(frame, blueLower, blueUpper)
+    blue = cv2.inRange(frame, plateLower, plateUpper)
     blue = cv2.GaussianBlur(blue, (3, 3), 0)
 
     # find contours in the image
@@ -52,13 +78,13 @@ def video_frame(frame):
         # compute the (rotated) bounding box around then
         # contour and then draw it
         rect = np.int32(cv2.boxPoints(cv2.minAreaRect(cnt)))
-        print("rect:",rect)
-        print("cnt:", cnt)
+        # print("rect:",rect)
+        # print("cnt:", cnt)
 
         cv2.drawContours(frame, [rect], -1, (0, 255, 0), 2)
-        xMid = (rect[4] - rect[3])/2
-        yMid = (rect[1] - rect[4])/2
-        rectMid = [xMid, yMid]
+
+        drone.objectCenterX = (rect[1][0] + rect[2][0])/2
+        drone.objectCenterY = (rect[3][1] + rect[2][1])/2
 
 
     cv2.imshow("Drone", frame)
@@ -84,13 +110,18 @@ def scale(value, scaler):
         return 0
     return value * scaler
 
+def clip(value, low, high):
+    if value < low:
+        return low
+    if value > high:
+        return high
+    return value
+
 print("Connecting to drone..")
 drone = Bebop()
 drone.video_callbacks(video_start, video_end, video_frame)
 drone.videoEnable()
 print("Connected.")
-for i in xrange(10000):
-    drone.update();
 print("Battery:", drone.battery)
 
 pygame.init()
@@ -105,26 +136,120 @@ done = False
 clock = pygame.time.Clock()
 
 # -------- Main Program Loop -----------
+# drone.flyToAltitude(2.25)
 
-MAX_SPEED = 70
+MAX_SPEED = 80
+# drone.moveScaler = .25
+
+tilt = 0
+tilMin = -70
+tiltMax = 40
+
+pan = 0
+panMin = -40
+panMax = 40
+
+secondsCounter = 0
+
+printCounter = 0
+plateFindCounter = 0
+
+lastTime = time.time()
 
 while not done:
     try:
-        # EVENT PROCESSING STEP
+        userMovement = False
+#         EVENT PROCESSING STEP
         for event in pygame.event.get():  # User did something
             if event.type == pygame.QUIT:  # If user clicked close
                 done = True  # Flag that we are done so we exit this loop
-        # if cv2.inRange(frame, blueLower, blueUpper):
-        #     drone.land()
-        # drone.takeoff()
-        # drone.flyToAltitude(2.5)
-        #     drone.update()
+
+        # Displays battery every 5 seconds
+        nowTime = time.time()
+        if (nowTime - lastTime) > 1:
+            secondsCounter += 1
+            lastTime = nowTime
+
+            if secondsCounter % 5 == 0:
+                print("Battery: " + str(drone.battery))
+        #   --- Flying ---
+        # Power values
+        roll =  scale(joystick.get_axis(0), MAX_SPEED)
+        pitch = -scale(joystick.get_axis(1), MAX_SPEED)
+        yaw =   scale(joystick.get_axis(3), MAX_SPEED)
+        gaz =   -scale(joystick.get_axis(4), MAX_SPEED)
+
+        if roll != 0:
+            userMovement = True
+
+        if pitch != 0:
+            userMovement = True
+
+        if yaw != 0:
+            userMovement = True
+
+        if gaz != 0:
+            userMovement = True
+
+        if joystick.get_button(0) == 1 and not drone.findPlate:
+            executing_command = True
+            print("Button 0 pressed")
+            drone.findPlate = True
+            drone.moveScaler = .25
+
+        if joystick.get_button(1) == 1 and drone.findPlate:
+            executing_command = True
+            print("Button 1 pressed")
+            drone.findPlate = False
+
+        if joystick.get_button(2) == 1:
+            executing_command = True
+            print("Button 2 pressed")
+
+
+        if joystick.get_button(6) == 1:
+            executing_command = True
+            print("Landing")
+            drone.land()
+
+        if joystick.get_button(7) == 1:
+            executing_command = True
+            print("Taking off")
+            drone.takeoff()
+
+        if joystick.get_button(8) == 1:
+            executing_command = True
+            print("Button 8 pressed")
+            drone.emergency()
+
+        if userMovement:
+            drone.update(cmd=movePCMDCmd(True, roll, pitch, yaw, gaz))
+
+        elif drone.findPlate:
+            roll = (drone.objectCenterX - (drone.frameWidth >> 1)) * drone.moveScaler
+            pitch = ((drone.frameHeight >> 1) - drone.objectCenterY) * drone.moveScaler
+
+            roll = clip(roll, -50, 50)
+            pitch = clip(pitch, -50, 50)
+
+            plateFindCounter += 1
+
+            if (plateFindCounter % 3) == 0:
+                roll *= .4
+                pitch*= .4
+
+            drone.update(cmd=movePCMDCmd(True, roll, pitch, 0, 0))
+
+        else:
+            drone.hover()
+
+        clock.tick(20)
 
     except:
         print("Error")
         if drone.flyingState is None or drone.flyingState == 1: # if taking off then do emegency landing
             drone.emergency()
-            drone.land()
+        drone.land()
 
 
 # Close the window and quit.

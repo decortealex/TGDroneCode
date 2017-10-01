@@ -105,6 +105,10 @@ class Bebop:
         self.config()
         self.commandSender.start()
 
+        # Plate finding variables
+        self.findPlate = False
+
+
         # Sphero tracking variables
         self.findSphero = False
         self.sinceLastSphero = 0
@@ -118,6 +122,8 @@ class Bebop:
         self.maxEdgeVal = 0
         self.minCircleRadius = 0
         self.maxCircleRadius = 0
+        self.frameWidth = 0
+        self.frameHeight = 0
 
 
     def _discovery( self ):

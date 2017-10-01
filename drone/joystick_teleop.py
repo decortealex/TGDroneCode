@@ -58,7 +58,7 @@ else:
 
 # -------- Main Program Loop -----------
 
-MAX_SPEED = 70
+MAX_SPEED = 50
 
 while not done:
     try:
