@@ -7,13 +7,14 @@ import cv2
 from commands import *
 import logging
 from bebop import Bebop
-# from bardecoder import Decoder
-# from bardecoder import Barcode
-#
+from bardecoder import Decoder
+from bardecoder import Barcode
+
 logging.basicConfig(level=logging.DEBUG)
 
 wnd = None
 cnt = 0
+decoder = Decoder()
 f = open( "./images/video.h264", "wb" )
 frames = 0
 lastFrames = 0
@@ -45,51 +46,86 @@ else:
 # we need this to actually use this for the rectangle stuff
 # if we're using that for movement.
 def video_frame(frame):
-    if drone.frameWidth == 0:
-        drone.frameWidth = numpy.size(frame, 1)
-    if drone.frameHeight == 0:
-        drone.frameHeight = numpy.size(frame, 0)
+    # if drone.frameWidth == 0:
+    #     drone.frameWidth = numpy.size(frame, 1)
+    # if drone.frameHeight == 0:
+    #     drone.frameHeight = numpy.size(frame, 0)
+    #
+    # # Initialize variables to compare the current frame to
+    # if drone.thisFrame is None:
+    #     drone.lastFrame = frame
+    # else:
+    #     drone.lastFrame = drone.thisFrame
+    # drone.thisFrame = frame
+    #
+    # plateLower = np.array([160, 170, 190], dtype="uint8")
+    # plateUpper = np.array([225, 230, 250], dtype="uint8")
+    #
+    # # determine which pixels fall within the blue boundaries
+    # # and then blur the binary image
+    #
+    # blue = cv2.inRange(frame, plateLower, plateUpper)
+    # blue = cv2.GaussianBlur(blue, (3, 3), 0)
+    #
+    # # find contours in the image
+    # a, cnts, hierarchy = cv2.findContours(blue.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    #
+    # # check to see if any contours were found
+    # if len(cnts) > 0:
+    #     # sort the contours and find the largest one -- we
+    #     # will assume this contour correspondes to the area
+    #     # of my phone
+    #     cnt = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
+    #     # compute the (rotated) bounding box around then
+    #     # contour and then draw it
+    #     rect = np.int32(cv2.boxPoints(cv2.minAreaRect(cnt)))
+    #     # print("rect:",rect)
+    #     # print("cnt:", cnt)
+    #
+    #     cv2.drawContours(frame, [rect], -1, (0, 255, 0), 2)
+    #
+    #     drone.objectCenterX = (rect[1][0] + rect[2][0])/2
+    #     drone.objectCenterY = (rect[3][1] + rect[2][1])/2
+    barcodes = decoder.decode(frame)
+    if len(barcodes) > 0:
+        for barcode in barcodes:
+            # do something useful with results
+            print('decoded', barcode.type, 'symbol', barcode.location,
+                  '"%s"' % barcode.value)
+            min_x = min(barcode.location[0][0], barcode.location[1][0], barcode.location[2][0], barcode.location[3][0])
+            max_x = max(barcode.location[0][0], barcode.location[1][0], barcode.location[2][0], barcode.location[3][0])
 
-    # Initialize variables to compare the current frame to
-    if drone.thisFrame is None:
-        drone.lastFrame = frame
-    else:
-        drone.lastFrame = drone.thisFrame
-    drone.thisFrame = frame
+            min_y = min(barcode.location[0][1], barcode.location[1][1], barcode.location[2][1], barcode.location[3][1])
+            max_y = max(barcode.location[0][1], barcode.location[1][1], barcode.location[2][1], barcode.location[3][1])
 
-    plateLower = np.array([160, 170, 190], dtype="uint8")
-    plateUpper = np.array([225, 230, 250], dtype="uint8")
+            drone.objectCenterX = int( (min_x + max_x) * 0.5)
+            drone.objectCenterY = int( (min_y + max_y) * 0.5)
 
-    # determine which pixels fall within the blue boundaries
-    # and then blur the binary image
+            height, width, _ = frame.shape
 
-    blue = cv2.inRange(frame, plateLower, plateUpper)
-    blue = cv2.GaussianBlur(blue, (3, 3), 0)
+            color = (0, 0 , 255)
+            text = "Centered"
+            if abs(width * 0.5 - drone.objectCenterX) < 50:
+                color = (0, 255, 0)
+            elif drone.objectCenterX - width * 0.5 > 50:
+                color = (0, 0, 255)
+                text = "Go Right"
+            elif drone.objectCenterX - width * 0.5 < 50:
+                color = (255, 0, 0)
+                text = "Go Left"
 
-    # find contours in the image
-    a, cnts, hierarchy = cv2.findContours(blue.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # check to see if any contours were found
-    if len(cnts) > 0:
-        # sort the contours and find the largest one -- we
-        # will assume this contour correspondes to the area
-        # of my phone
-        cnt = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
-        # compute the (rotated) bounding box around then
-        # contour and then draw it
-        rect = np.int32(cv2.boxPoints(cv2.minAreaRect(cnt)))
-        # print("rect:",rect)
-        # print("cnt:", cnt)
-
-        cv2.drawContours(frame, [rect], -1, (0, 255, 0), 2)
-
-        drone.objectCenterX = (rect[1][0] + rect[2][0])/2
-        drone.objectCenterY = (rect[3][1] + rect[2][1])/2
+            cv2.line(frame, barcode.location[0], barcode.location[1], color=color, thickness=2)
+            cv2.line(frame, barcode.location[1], barcode.location[2], color=color, thickness=2)
+            cv2.line(frame, barcode.location[2], barcode.location[3], color=color, thickness=2)
+            cv2.line(frame, barcode.location[0], barcode.location[3], color=color, thickness=2)
+            cv2.circle(frame, (drone.objectCenterX, drone.objectCenterY), 3, color=color, thickness=2)
+            cv2.putText(frame, org=(width - 100, height - 100), text=text, color=color, fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1,)
+            break
 
 
     cv2.imshow("Drone", frame)
     cv2.waitKey(10)
-    cv2.imshow("Binary", blue)
+    cv2.imshow("Binary", barcodes)
 
 
 def video_start():
