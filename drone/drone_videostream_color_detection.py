@@ -7,12 +7,13 @@ logging.basicConfig(level=logging.DEBUG)
 
 wnd = None
 def video_frame(frame):
-   plateLower = np.array([160, 170, 190], dtype="uint8")
-   plateUpper = np.array([225, 230, 250], dtype="uint8")
+   idolLower = np.array([10, 150, 200], dtype="uint8")
+   idolUpper = np.array([85, 175, 215], dtype="uint8")
+
 
    # determine which pixels fall within the blue boundaries
    # and then blur the binary image
-   blue = cv2.inRange(frame, plateLower, plateUpper)
+   blue = cv2.inRange(frame, idolLower, idolUpper)
    blue = cv2.GaussianBlur(blue, (3, 3), 0)
 
    # find contours in the image
@@ -24,11 +25,12 @@ def video_frame(frame):
        # will assume this contour correspondes to the area
        # of my phone
        cnt = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
+       print(len(cnt))
 
        # compute the (rotated) bounding box around then
        # contour and then draw it
        rect = np.int32(cv2.boxPoints(cv2.minAreaRect(cnt)))
-       print(rect);
+       # print(rect);
 
        cv2.drawContours(frame, [rect], -1, (0, 255, 0), 2)
 

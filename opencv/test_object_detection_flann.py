@@ -3,7 +3,7 @@ import cv2
 
 MIN_MATCH_COUNT = 10
 
-img1 = cv2.imread('images/owlsmall.png',0)          # queryImage
+img1 = cv2.imread('/home/user/Documents/TGDroneCode/FullSizeRender.jpg',0)          # queryImage
 
 # Initiate SIFT detector
 #sift = cv2.xfeatures2d.SURF_create(1000)
@@ -13,7 +13,7 @@ sift = cv2.xfeatures2d.SIFT_create()
 kp1, des1 = sift.detectAndCompute(img1,None)
 bf = cv2.BFMatcher()
 
-cam = cv2.VideoCapture(1)
+cam = cv2.VideoCapture(0)
 
 while True:
     (grabbed, frame) = cam.read()
@@ -29,7 +29,7 @@ while True:
 
         flann = cv2.FlannBasedMatcher(index_params, search_params)
 
-        matches = flann.knnMatch(des1,des2,k=2)
+        matches = flann.knnMatch(des1, des2, k=2)
 
         # store all the good matches as per Lowe's ratio test.
         good = []

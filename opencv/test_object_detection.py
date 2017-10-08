@@ -3,8 +3,7 @@ import cv2
 
 
 #img1 = cv2.imread('/home/user1/opencv/samples/data/box.png',0)          # queryImage
-img1 = cv2.imread('./templates/techgarage-logo.png',0)          # queryImage
-img2 = cv2.imread('/home/user1/opencv/samples/data/box_in_scene.png',0) # trainImage
+img1 = cv2.imread('/home/user/Documents/TGDroneCode/Idol.jpg',0)          # queryImage
 
 # Initiate SIFT detector
 #sift = cv2.xfeatures2d.SURF_create(1000)
@@ -38,5 +37,5 @@ while True:
         # cv2.drawMatchesKnn expects list of lists as matches.
         img3 = cv2.drawMatchesKnn(img1,kp1,img2,kp2,good,img2, flags=2)
 
-        cv2.imshow("aa", img3)
+        cv2.imshow("object detect", img3)
         cv2.waitKey(10)
