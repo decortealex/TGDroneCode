@@ -14,7 +14,7 @@ def video_frame(frame):
     if len(barcodes) > 0:
         for barcode in barcodes:
             # do something useful with results
-            if barcode.value == "9":
+            if barcode.value == "9" or barcode.value == "8" or barcode.value == "7":
                 min_x = min(barcode.location[0][0], barcode.location[1][0], barcode.location[2][0],
                             barcode.location[3][0])
                 max_x = max(barcode.location[0][0], barcode.location[1][0], barcode.location[2][0],
@@ -37,9 +37,9 @@ def video_frame(frame):
                 cv2.line(frame, barcode.location[1], barcode.location[2], color=color, thickness=2)
                 cv2.line(frame, barcode.location[2], barcode.location[3], color=color, thickness=2)
                 cv2.line(frame, barcode.location[0], barcode.location[3], color=color, thickness=2)
-                cv2.circle(frame, (center_x, center_y), 3, color=color, thickness=2)
-                cv2.putText(frame, org=(width - 100, height - 100), text=text, color=color,
-                            fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, )
+                # cv2.circle(frame, (center_x, center_y), 3, color=color, thickness=2)
+                # cv2.putText(frame, org=(width - 100, height - 100), text=text, color=color,
+                #             fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, )
 
             break
 
