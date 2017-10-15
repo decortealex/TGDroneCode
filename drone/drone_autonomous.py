@@ -13,6 +13,8 @@ from bardecoder import Barcode
 logging.basicConfig(level=logging.DEBUG)
 
 wnd = None
+idolFound = False
+idolInCenter = False
 startFindingIdol = False
 cnt = 0
 decoder = Decoder()
@@ -32,16 +34,16 @@ done = False
 clock = pygame.time.Clock()
 
 # Initializes joystick
-if pygame.joystick.get_count() == 0:
-    print("No joysticks found")
-    done = True
-else:
-    joystick = pygame.joystick.Joystick(0)
-    joystick.init()
-    print("Initialized %s" % (joystick.get_name()))
-    print("Number of buttons %d. Number of axis %d, Number of hats %d" %
-          (joystick.get_numbuttons(), joystick.get_numaxes(),
-           joystick.get_numhats()))
+# if pygame.joystick.get_count() == 0:
+#     print("No joysticks found")
+#     done = True
+# else:
+#     joystick = pygame.joystick.Joystick(0)
+#     joystick.init()
+#     print("Initialized %s" % (joystick.get_name()))
+#     print("Number of buttons %d. Number of axis %d, Number of hats %d" %
+#           (joystick.get_numbuttons(), joystick.get_numaxes(),
+#            joystick.get_numhats()))
 
 # frame =
 # we need this to actually use this for the rectangle stuff
@@ -167,19 +169,12 @@ print("Battery:", drone.battery)
 
 pygame.init()
 size = [100, 100]
-screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Drone Teleop")
-
-# Loop until the user clicks the close button.
-done = False
-
-# Used to manage how fast the screen updates
-clock = pygame.time.Clock()
 
 # -------- Main Program Loop -----------
 # drone.flyToAltitude(2.25)
 
-MAX_SPEED = 80
+MAX_SPEED = 40
 # drone.moveScaler = .25
 
 tilt = 0
@@ -199,7 +194,7 @@ lastTime = time.time()
 
 while not done:
     try:
-        userMovement = False
+        # userMovement = True
 #         EVENT PROCESSING STEP
         for event in pygame.event.get():  # User did something
             if event.type == pygame.QUIT:  # If user clicked close
@@ -215,53 +210,53 @@ while not done:
                 print("Battery: " + str(drone.battery))
         #   --- Flying ---
         # Power values
-        roll =  scale(joystick.get_axis(0), MAX_SPEED)
-        pitch = -scale(joystick.get_axis(1), MAX_SPEED)
-        yaw =   scale(joystick.get_axis(3), MAX_SPEED)
-        gaz =   -scale(joystick.get_axis(4), MAX_SPEED)
+        roll =  MAX_SPEED
+        pitch = MAX_SPEED
+        yaw =   MAX_SPEED
+        gaz =   MAX_SPEED
 
-        if roll != 0:
-            userMovement = True
-
-        if pitch != 0:
-            userMovement = True
-
-        if yaw != 0:
-            userMovement = True
-
-        if gaz != 0:
-            userMovement = True
-
-        if joystick.get_button(0) == 1 and not startFindingIdol:
-            executing_command = True
-            print("Button 0 pressed")
-            idolFound = True
-            drone.moveScaler = .25
-
-        if joystick.get_button(1) == 1 and startFindingIdol:
-            executing_command = True
-            print("Button 1 pressed")
-            idolFound = False
-
-        if joystick.get_button(2) == 1:
-            executing_command = True
-            print("Button 2 pressed")
-
-
-        if joystick.get_button(6) == 1:
-            executing_command = True
-            print("Landing")
-            drone.land()
-
-        if joystick.get_button(7) == 1:
-            executing_command = True
-            print("Taking off")
-            drone.takeoff()
-
-        if joystick.get_button(8) == 1:
-            executing_command = True
-            print("Button 8 pressed")
-            drone.emergency()
+        # if roll != 0:
+        #     userMovement = True
+        #
+        # if pitch != 0:
+        #     userMovement = True
+        #
+        # if yaw != 0:
+        #     userMovement = True
+        #
+        # if gaz != 0:
+        #     userMovement = True
+        #
+        # if joystick.get_button(0) == 1 and not startFindingIdol:
+        #     executing_command = True
+        #     print("Button 0 pressed")
+        #     idolFound = True
+        #     drone.moveScaler = .25
+        #
+        # if joystick.get_button(1) == 1 and startFindingIdol:
+        #     executing_command = True
+        #     print("Button 1 pressed")
+        #     idolFound = False
+        #
+        # if joystick.get_button(2) == 1:
+        #     executing_command = True
+        #     print("Button 2 pressed")
+        #
+        #
+        # if joystick.get_button(6) == 1:
+        #     executing_command = True
+        #     print("Landing")
+        #     drone.land()
+        #
+        # if joystick.get_button(7) == 1:
+        #     executing_command = True
+        #     print("Taking off")
+        #     drone.takeoff()
+        #
+        # if joystick.get_button(8) == 1:
+        #     executing_command = True
+        #     print("Button 8 pressed")
+        #     drone.emergency()
 
         # elif drone.findPlate:
         #     roll = (drone.objectCenterX - (drone.frameWidth >> 1)) * drone.moveScaler
@@ -283,10 +278,22 @@ while not done:
         #
         clock.tick(20)
 
-        if userMovement:
-            drone.update(cmd=movePCMDCmd(True, roll, pitch, yaw, gaz))
+        # if userMovement:
+        #     drone.update(cmd=movePCMDCmd(True, roll, pitch, yaw, gaz))
+        drone.takeoff()
+        drone.flyToAltitude(1.5)
+        drone.hover()
+        drone.update(cmd=movePCMDCmd(True, 0, MAX_SPEED, 0, 0))
+        drone.wait(3)
+        drone.hover()
+        startFindingIdol = True
+        if idolInCenter:
+            drone.update(cmd=movePCMDCmd(True, 0, MAX_SPEED, 0, 0))
+        drone.wait(8)
+        drone.hover()
+        drone.land()
 
-        elif startFindingIdol:
+        if startFindingIdol:
             if idolFound:
                 roll = (drone.objectCenterX - (drone.frameWidth >> 1)) * drone.moveScaler
                 pitch = ((drone.frameHeight >> 1) - drone.objectCenterY) * drone.moveScaler
@@ -301,6 +308,9 @@ while not done:
                     pitch*= .4
 
                 drone.update(cmd=movePCMDCmd(True, roll, pitch, 0, 0))
+                if drone.frameWidth >>1 == drone.objectCenterX:
+                    global idolInCenter
+                    idolInCenter = True
 
         else:
             drone.hover()
@@ -308,9 +318,9 @@ while not done:
 
     except:
         print("Error")
-        if drone.flyingState is None or drone.flyingState == 1: # if taking off then do emegency landing
-            drone.emergency()
-        drone.land()
+        # if drone.flyingState is None or drone.flyingState == 1: # if taking off then do emegency landing
+        #     drone.emergency()
+        # drone.land()
 
 
 # Close the window and quit.

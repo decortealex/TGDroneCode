@@ -3,11 +3,46 @@ import cv2
 from commands import *
 import logging
 from bebop import Bebop
+from bardecoder import Decoder
+from bardecoder import Barcode
 
 logging.basicConfig(level=logging.DEBUG)
-
+decoder = Decoder()
 wnd = None
 def video_frame(frame):
+    barcodes = decoder.decode(frame)
+    if len(barcodes) > 0:
+        for barcode in barcodes:
+            # do something useful with results
+            if barcode.value == "9":
+                min_x = min(barcode.location[0][0], barcode.location[1][0], barcode.location[2][0],
+                            barcode.location[3][0])
+                max_x = max(barcode.location[0][0], barcode.location[1][0], barcode.location[2][0],
+                            barcode.location[3][0])
+
+                min_y = min(barcode.location[0][1], barcode.location[1][1], barcode.location[2][1],
+                            barcode.location[3][1])
+                max_y = max(barcode.location[0][1], barcode.location[1][1], barcode.location[2][1],
+                            barcode.location[3][1])
+
+                center_x = int((min_x + max_x) * 0.5)
+                center_y = int((min_y + max_y) * 0.5)
+
+                height, width, _ = frame.shape
+
+                color = (0, 255, 0)
+                text = "Valuable Cans"
+
+                cv2.line(frame, barcode.location[0], barcode.location[1], color=color, thickness=2)
+                cv2.line(frame, barcode.location[1], barcode.location[2], color=color, thickness=2)
+                cv2.line(frame, barcode.location[2], barcode.location[3], color=color, thickness=2)
+                cv2.line(frame, barcode.location[0], barcode.location[3], color=color, thickness=2)
+                cv2.circle(frame, (center_x, center_y), 3, color=color, thickness=2)
+                cv2.putText(frame, org=(width - 100, height - 100), text=text, color=color,
+                            fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, )
+
+            break
+
     cv2.imshow("Drone", frame)
     cv2.waitKey(10)
 
@@ -58,7 +93,7 @@ else:
 
 # -------- Main Program Loop -----------
 
-MAX_SPEED = 50
+MAX_SPEED = 80
 
 while not done:
     try:
@@ -68,6 +103,7 @@ while not done:
                 done = True  # Flag that we are done so we exit this loop
 
         executing_command = False
+        userMovement = False
         drone.update(cmd=moveCameraCmd(0,0))
 
         if joystick.get_button(0) == 1:
@@ -124,7 +160,21 @@ while not done:
         yaw = scale(joystick.get_axis(3), MAX_SPEED)
         gaz = -scale(joystick.get_axis(4), MAX_SPEED)
 
-        drone.update(cmd=movePCMDCmd(True, roll, pitch, yaw, gaz))
+        if roll != 0:
+            userMovement = True
+
+        if pitch != 0:
+            userMovement = True
+
+        if yaw != 0:
+            userMovement = True
+
+        if gaz != 0:
+            userMovement = True
+        if userMovement == True:
+            drone.update(cmd=movePCMDCmd(True, roll, pitch, yaw, gaz))
+        else:
+            drone.hover()
 
         (hat_x, hat_y) = joystick.get_hat(0)
 
