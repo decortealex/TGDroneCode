@@ -24,23 +24,21 @@ def video_frame(frame):
                             barcode.location[3][1])
                 max_y = max(barcode.location[0][1], barcode.location[1][1], barcode.location[2][1],
                             barcode.location[3][1])
-
                 center_x = int((min_x + max_x) * 0.5)
                 center_y = int((min_y + max_y) * 0.5)
 
                 height, width, _ = frame.shape
 
                 color = (0, 255, 0)
-                text = "Valuable Cans"
+                text = "Valuable Cans are highlighted"
 
                 cv2.line(frame, barcode.location[0], barcode.location[1], color=color, thickness=2)
                 cv2.line(frame, barcode.location[1], barcode.location[2], color=color, thickness=2)
                 cv2.line(frame, barcode.location[2], barcode.location[3], color=color, thickness=2)
                 cv2.line(frame, barcode.location[0], barcode.location[3], color=color, thickness=2)
-                # cv2.circle(frame, (center_x, center_y), 3, color=color, thickness=2)
-                # cv2.putText(frame, org=(width - 100, height - 100), text=text, color=color,
-                #             fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, )
-
+                cv2.circle(frame, (center_x, center_y), 3, color=color, thickness=2)
+                cv2.putText(frame, org=(width - 100, height - 100), text=text, color=color,
+                            fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, )
             break
 
     cv2.imshow("Drone", frame)
@@ -93,7 +91,7 @@ else:
 
 # -------- Main Program Loop -----------
 
-MAX_SPEED = 80
+MAX_SPEED = 70
 
 while not done:
     try:
@@ -108,7 +106,7 @@ while not done:
 
         if joystick.get_button(0) == 1:
             executing_command = True
-            print("Button 0 pressed")
+            # print("Button 0 pressed")
             drone.update(cmd=moveCameraCmd(-100,0))
 
         if joystick.get_button(1) == 1:
@@ -121,16 +119,16 @@ while not done:
 
         if joystick.get_button(3) == 1:
             executing_command = True
-            print("Button 3 pressed")
+            # print("Button 3 pressed")
             drone.update(cmd=moveCameraCmd(100,0))
 
         if joystick.get_button(4) == 1:
             executing_command = True
-            print("Button 4 pressed")
+            # print("Button 4 pressed")
 
         if joystick.get_button(5) == 1:
             executing_command = True
-            print("Button 5 pressed")
+            # print("Button 5 pressed")
 
         if joystick.get_button(6) == 1:
             executing_command = True
@@ -144,16 +142,16 @@ while not done:
 
         if joystick.get_button(8) == 1:
             executing_command = True
-            print("Button 8 pressed")
+            # print("Button 8 pressed")
             drone.emergency()
 
         if joystick.get_button(9) == 1:
             executing_command = True
-            print("Button 9 pressed")
+            # print("Button 9 pressed")
 
         if joystick.get_button(10) == 1:
             executing_command = True
-            print("Button 10 pressed")
+            # print("Button 10 pressed")
 
         roll = scale(joystick.get_axis(0), MAX_SPEED)
         pitch = -scale(joystick.get_axis(1), MAX_SPEED)
