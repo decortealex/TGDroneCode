@@ -30,7 +30,7 @@ def video_frame(frame):
                 height, width, _ = frame.shape
 
                 color = (0, 255, 0)
-                text = "Valuable Cans are highlighted"
+                text = "Valuable Cans"
 
                 cv2.line(frame, barcode.location[0], barcode.location[1], color=color, thickness=2)
                 cv2.line(frame, barcode.location[1], barcode.location[2], color=color, thickness=2)

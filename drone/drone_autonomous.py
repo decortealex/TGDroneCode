@@ -180,6 +180,7 @@ MAX_SPEED = 40
 tilt = 0
 tilMin = -70
 tiltMax = 40
+timer = 0
 
 pan = 0
 panMin = -40
@@ -283,9 +284,11 @@ while not done:
         drone.takeoff()
         drone.flyToAltitude(1.5)
         drone.hover()
+        drone.wait(.2)
         drone.update(cmd=movePCMDCmd(True, 0, MAX_SPEED, 0, 0))
         drone.wait(3)
         drone.hover()
+        drone.wait(.2)
         startFindingIdol = True
         if idolInCenter:
             drone.update(cmd=movePCMDCmd(True, 0, MAX_SPEED, 0, 0))
@@ -294,6 +297,7 @@ while not done:
         drone.land()
 
         if startFindingIdol:
+            timer += timer
             if idolFound:
                 roll = (drone.objectCenterX - (drone.frameWidth >> 1)) * drone.moveScaler
                 pitch = ((drone.frameHeight >> 1) - drone.objectCenterY) * drone.moveScaler
@@ -311,6 +315,9 @@ while not done:
                 if drone.frameWidth >>1 == drone.objectCenterX:
                     global idolInCenter
                     idolInCenter = True
+            elif timer == 20:
+                drone.land()
+                pygame.quit()
 
         else:
             drone.hover()
